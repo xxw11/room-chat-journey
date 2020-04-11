@@ -1,3 +1,7 @@
+import datetime
+import os
+import uuid
+
 from flask import request, g
 from flask_restful import abort
 
@@ -33,7 +37,7 @@ def get_user(user_ident):
 # 访问控制
 def login_required(fun):
     def wrapper(*args,**kwargs):
-        token=request.args.get("token")
+        token=request.args.get("token") or request.form.get("token")
 
         user=get_user(token)
 
@@ -45,3 +49,9 @@ def login_required(fun):
 
         return fun(*args,**kwargs)
     return wrapper
+
+# 更改上传的文件
+def change_filename(filename):
+    fileinfo = os.path.splitext(filename)
+    filename = datetime.datetime.now().strftime("%m%d%H") + uuid.uuid4().hex + fileinfo[-1]
+    return filename
