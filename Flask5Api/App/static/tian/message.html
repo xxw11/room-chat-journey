@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+
+</head>
+<body>
+<h1>聊天室</h1>
+<input type="text" id="token" placeholder="token">
+<span>要登录的聊天室</span>
+<input type="text" id="room" placeholder="聊天室id">
+<button id="sendbutton" onclick="login()" >登录聊天室</button>
+<span>发消息：</span>
+<input type="text" id="msg">
+ <button id="sendbutton" onclick="send_message()">发送</button>
+
+ <div  id="chat_list" style="width: 500px;height: 500px;"></div>
+<script type="text/javascript">
+        var ws = null;
+
+
+    function send_message() {
+        var msg=document.getElementById("msg").value;
+        send_msg={
+            "msg":msg,
+        };
+        ws.send(JSON.stringify(send_msg));
+    }
+
+
+    function login() {
+        var token=document.getElementById("token").value;
+        var room=document.getElementById("room").value;
+        ws = new WebSocket("ws://39.106.119.191/api/ws/"+"?token="+token+"&room="+room);
+
+
+        ws.onmessage=function (data) {
+
+        var recv_msg =JSON.parse(data.data);
+        var ptag =document.createElement("p");
+        ptag.innerText=recv_msg.from_user+"在房间"+recv_msg.room+":"+recv_msg.msg;
+        document.getElementById("chat_list").appendChild(ptag);
+    };
+    }
+    </script>
+</body>
+</html>
