@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 from App.apis.api_constant import HTTP_CREATE_OK, USER_ACTION_REGISTER, USER_ACTION_LOGIN, HTTP_OK, \
     USER_ACTION_QUICK_LOGIN, USER_VALIDATE
 from App.apis.model_utils import get_user, login_required, change_filename
-from App.models import User
+from App.models import User,Room
 from App.settings import FC_DIR
 
 parse_base = reqparse.RequestParser()
@@ -41,6 +41,7 @@ user_fields = {
     "icon": fields.String,
     # "is_active":fields.Integer,
     "id":fields.Integer,
+    "token":fields.String(attribute="access_token"),
 }
 single_user_fields = {
     "status": fields.Integer,
@@ -123,7 +124,9 @@ class UserResource(Resource):
 
             if not user.save():
                 abort(400, msg="创建失败")
-
+            room = Room.query.get(1)
+            room.users.append(user)
+            room.save()
             token = uuid.uuid4().hex
             user.access_token = token
             user.save()

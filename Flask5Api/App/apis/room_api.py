@@ -10,6 +10,8 @@ from App.models import Room
 from App.settings import ROOM_DIR
 
 parse_room_post=reqparse.RequestParser()
+parse_room_post.add_argument("name", type=str)
+parse_room_post.add_argument("detail", type=str)
 parse_room_post.add_argument("action", type=str, required=True, help="请输入请求参数")
 
 parse_room_post_join=parse_room_post.copy()
@@ -17,6 +19,7 @@ parse_room_post_join.add_argument("roomid", type=int, required=True, help="请�
 
 parse_room_patch=reqparse.RequestParser()
 parse_room_patch.add_argument("name", type=str)
+parse_room_patch.add_argument("detail", type=str)
 parse_room_patch.add_argument("roomid", type=int, required=True, help="请输入房间id")
 
 
@@ -26,6 +29,7 @@ room_fields={
     "url":fields.String,
     "name":fields.String,
     "icon":fields.String,
+    "detail":fields.String,
 }
 single_room_fields={
     "status":fields.Integer,
@@ -72,8 +76,7 @@ class RoomResource(Resource):
             room=Room.query.get(roomid)
             room.users.append(user)
             room.save()
-            print(user.rooms)
-            print(Room.query.get(room.id).users)
+
             data = {
                 "status": HTTP_OK,
                 "msg": "加入房间成功",
@@ -84,6 +87,7 @@ class RoomResource(Resource):
         elif action==ROOM_ACTION_REGISTER:
 
             name =request.args.get("name")
+            detail = request.args.get("detail")
 
             num = random.randint(10000, 100000)
             room=room.query.filter(Room.id==num).first()
@@ -100,6 +104,7 @@ class RoomResource(Resource):
             room.users.append(user)
             room.host_id=user.id
             room.name =name or "匿名聊天室"
+            room.detail = detail
 
             room.save()
             data = {
@@ -114,6 +119,7 @@ class RoomResource(Resource):
     def patch(self):
         args = parse_room_patch.parse_args()
         room=Room.query.get(args.get("roomid"))
+
         if not room:
             abort(404,msg="房间号不存在")
 
@@ -123,7 +129,7 @@ class RoomResource(Resource):
 
 
         name = args.get("name")
-
+        detail = args.get("detail")
         icon = request.files.get("icon")
 
 
@@ -135,6 +141,7 @@ class RoomResource(Resource):
             icon.save(filepath)
 
         room.name = name or room.name
+        room.detail=detail or room.detail
         if icon:
             room.icon = icon.filename or room.icon
         room.save()
