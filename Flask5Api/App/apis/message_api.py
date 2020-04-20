@@ -4,14 +4,16 @@ from datetime import datetime
 from flask import request, g
 from flask_restful import Resource, abort, fields, marshal, reqparse
 from geventwebsocket import WebSocketError
+from werkzeug.utils import secure_filename
 
 from App.apis.api_constant import HTTP_OK
-from App.apis.model_utils import login_required
+from App.apis.model_utils import login_required, change_filename
 from App.models import Room, Message
+from App.settings import PIC_DIR
 
 parse_room_message = reqparse.RequestParser()
 parse_room_message.add_argument("token", type=str, required=True, help="请输入令牌")
-parse_room_message.add_argument("roomid", type=str, required=True, help="请输入房间id")
+parse_room_message.add_argument("roomid", type=int, required=True, help="请输入房间id")
 parse_room_message.add_argument("type", type=int)
 
 message_fields = {
@@ -60,6 +62,42 @@ class RoomMsgResource(Resource):
             "data": messages,
         }
         return marshal(data, messages_fields)
+
+
+class MsgPictureResource(Resource):
+    @login_required
+    def post(self):
+        user=g.user
+        args = parse_room_message.parse_args()
+        picture = request.files.get("picture")
+        roomid = args.get("roomid")
+        if picture is None:
+            abort(404, msg="请上传图片")
+        try:
+            picture.filename = secure_filename(picture.filename)
+            picture.filename = change_filename(picture.filename)
+            picture.filename = str(user.id) + picture.filename
+            filepath = PIC_DIR + picture.filename
+            picture.save(filepath)
+        except:
+            abort(401,"图片上传失败")
+        message = Message()
+        message.body = "http://39.106.119.191/uploads/pictures/"+picture.filename
+        message.type = 2
+        message.message_author = user.id
+        message.message_room = roomid
+        message.from_user = user.username
+        message.user_icon = user.icon
+        message.timestamp = datetime.now()
+        message.save()
+
+        for name, u_socket in user_socket_dict[roomid].items():
+            try:
+                data = dict(marshal(message, message_fields))
+                u_socket.send(str(data))
+            except:
+                abort(402, "发送失败")
+
 
 
 class MessageResource(Resource):
@@ -185,3 +223,5 @@ class MessageResource(Resource):
                             print(e)
                             del user_socket_dict[room.id][user.username]
                             break
+
+
