@@ -24,7 +24,7 @@ parse_room_patch.add_argument("roomid", type=int, required=True, help="请输入
 
 
 room_fields={
-    "id": fields.Integer,
+    "roomid": fields.Integer(attribute='id'),
     "host_id":fields.Integer,
     "url":fields.String,
     "name":fields.String,
@@ -44,7 +44,20 @@ rooms_fields = {
 
 
 
-
+class RoomInfoResource(Resource):
+    def get(self):
+        roomid=request.args.get("roomid")
+        if  roomid is None:
+            abort(404,msg="room no found")
+        room=Room.query.get(roomid)
+        if room is  None:
+            abort(404, msg="room no found")
+        data = {
+            "status": HTTP_OK,
+            "msg": "房间查找成功",
+            "data": room,
+        }
+        return marshal(data, single_room_fields)
 
 class RoomResource(Resource):
 
@@ -86,8 +99,8 @@ class RoomResource(Resource):
 
         elif action==ROOM_ACTION_REGISTER:
 
-            name =request.args.get("name")
-            detail = request.args.get("detail")
+            name =request.args.get("name") or request.form.get("name")
+            detail = request.args.get("detail") or request.form.get("detail")
 
             num = random.randint(10000, 100000)
             room=room.query.filter(Room.id==num).first()
@@ -98,7 +111,7 @@ class RoomResource(Resource):
             num=str(user.id)+str(num)
             room = Room()
 
-            room.url=num
+            room.url="http://39.106.119.191/invite.html?roomid="+num
             room.id=int(num)
 
             room.users.append(user)
@@ -153,3 +166,35 @@ class RoomResource(Resource):
         }
 
         return marshal(data, single_room_fields)
+
+    @login_required
+    def delete(self):
+        args = parse_room_patch.parse_args()
+        room = Room.query.get(args.get("roomid"))
+        if not room:
+            abort(404,msg="房间号不存在")
+        user = g.user
+
+        if user.id == room.host_id:
+            try:
+                room.delete()
+                room.save()
+            except:
+                pass
+
+            data = {
+                "msg": "delete ok",
+                "status": HTTP_OK,
+            }
+            return data
+        if user.id!=room.host_id:
+            try:
+                room.users.remove(user)
+                room.save()
+            except:
+                pass
+            data={
+                "msg":"delete ok",
+                "status":HTTP_OK,
+            }
+            return data

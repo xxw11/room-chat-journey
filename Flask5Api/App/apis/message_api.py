@@ -104,9 +104,9 @@ class MessageResource(Resource):
     @login_required
     def get(self):
         user = g.user
-
+        # print(user.id)
         usr_socket = request.environ.get("wsgi.websocket")  # type:WebSocket
-
+        # print(usr_socket)
         # 查询用户的房间 并添加到通讯字典
         for room in user.rooms:
             if usr_socket:
@@ -125,7 +125,8 @@ class MessageResource(Resource):
                         u_socket.send(str(data))
                     except:
                         print(user_socket_dict)
-                        del user_socket_dict[room.id][user.username]
+                        if user.username in user_socket_dict[room.id]:
+                            del user_socket_dict[room.id][user.username]
                         print(user_socket_dict)
                         return
 
@@ -133,9 +134,11 @@ class MessageResource(Resource):
         while True:
             try:
                 msg = usr_socket.receive()
+                print(msg)
             except:
                 for room in user.rooms:
-                    del user_socket_dict[room.id][user.username]
+                    if user.username in user_socket_dict[room.id]:
+                        del user_socket_dict[room.id][user.username]
                     for name, u_socket in user_socket_dict[room.id].items():
                         data = {
                             "status": HTTP_OK,
@@ -151,7 +154,8 @@ class MessageResource(Resource):
 
             if msg is None:
                 for room in user.rooms:
-                    del user_socket_dict[room.id][user.username]
+                    if user.username in user_socket_dict[room.id]:
+                        del user_socket_dict[room.id][user.username]
                     for name, u_socket in user_socket_dict[room.id].items():
                         data = {
                             "status": HTTP_OK,
@@ -163,7 +167,7 @@ class MessageResource(Resource):
                 break
 
             if msg:
-                print(msg)
+                # print(msg)
 
                 try:
                     msg = eval(msg)
@@ -177,7 +181,8 @@ class MessageResource(Resource):
                 #登出
                     if is_online == 0:
                         for room in user.rooms:
-                            del user_socket_dict[room.id][user.username]
+                            if user.username in user_socket_dict[room.id]:
+                                del user_socket_dict[room.id][user.username]
                             for name, u_socket in user_socket_dict[room.id].items():
                                 data = {
                                     "status": HTTP_OK,
@@ -221,7 +226,8 @@ class MessageResource(Resource):
                         except WebSocketError as e:
                             print(user_socket_dict)
                             print(e)
-                            del user_socket_dict[room.id][user.username]
+                            if user.username in user_socket_dict[room.id]:
+                                del user_socket_dict[room.id][user.username]
                             break
 
 

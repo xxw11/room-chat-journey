@@ -34,6 +34,8 @@ parse_patch.add_argument("username", type=str)
 parse_patch.add_argument("mood", type=str)
 # parse_patch.add_argument("icon", type=str,location=['files'])
 
+parse_get=reqparse.RequestParser()
+parse_get.add_argument("username", type=str, required=True,help=("请输入用户名"))
 
 user_fields = {
     "username": fields.String,
@@ -52,7 +54,13 @@ single_user_fields = {
 
 class UserResource(Resource):
     def get(self):
-        return {"msg": "ok"}
+        args = parse_get.parse_args()
+        username=args.get("username")
+
+        user = User.query.filter(User.username == username).first()
+        if user:
+            return 1
+        return 0
 
     def post(self):
 
@@ -182,6 +190,10 @@ class UserResource(Resource):
         user.mood = mood or user.mood
         if icon:
             user.icon = icon.filename or user.icon
+            for message in user.messages:
+                message.from_user=username or user.username
+                message.user_icon=icon.filename or user.icon
+                message.save()
         user.save()
 
         data = {
