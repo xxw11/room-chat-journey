@@ -1,6 +1,10 @@
 # ChatRoom-Journey
 西二在线第五轮考核代码存放
 
+# 网页部署（欢迎黑盒测试）
+http://39.106.119.191/invite.html?roomid=1        (推荐)
+http://39.106.119.191/
+
 ## showdoc接口文档  
 https://www.showdoc.cc/hsxxxw?page_id=4169907152209025
 
