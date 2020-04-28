@@ -10,7 +10,7 @@ from App.models import User
 
 # 查询用户
 def get_user(user_ident):
-    print(user_ident)
+    # print(user_ident)
     if not user_ident:
         return None
 

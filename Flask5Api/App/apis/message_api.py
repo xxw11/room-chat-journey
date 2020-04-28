@@ -14,7 +14,8 @@ from App.settings import PIC_DIR
 parse_room_message = reqparse.RequestParser()
 parse_room_message.add_argument("token", type=str, required=True, help="请输入令牌")
 parse_room_message.add_argument("roomid", type=int, required=True, help="请输入房间id")
-parse_room_message.add_argument("type", type=int)
+parse_room_message.add_argument("search_type", type=int)
+parse_room_message.add_argument("search_info", type=str)
 
 message_fields = {
     "user_id": fields.Integer(attribute='message_author'),
@@ -47,6 +48,32 @@ def addtwodimdict(thedict, key_a, key_b, val):
         thedict[key_a].update({key_b: val})
     else:
         thedict.update({key_a: {key_b: val}})
+
+class RoomSearchResource(Resource):
+    @login_required
+    def get(self):
+        args = parse_room_message.parse_args()
+        user = g.user
+        search_info=args.get("search_info")or ""
+        search_type = args.get("search_type") or 1
+        roomid = args.get("roomid")
+        room=Room.query.get(roomid)
+
+        print(args.get("search_info"))
+
+        if (not room) or not(user in room.users):
+            abort(400,msg="illegal!")
+        messages = Message.query.filter(
+            Message.body.ilike('%' + search_info + '%')).filter(
+            Message.type==search_type
+        )
+
+        data = {
+            "status": HTTP_OK,
+            "msg": "成功查询消息",
+            "data": messages,
+        }
+        return marshal(data, messages_fields)
 
 
 class RoomMsgResource(Resource):

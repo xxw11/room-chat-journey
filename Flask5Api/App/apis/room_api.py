@@ -101,7 +101,14 @@ class RoomResource(Resource):
 
             name =request.args.get("name") or request.form.get("name")
             detail = request.args.get("detail") or request.form.get("detail")
+            icon = request.files.get("icon")
 
+            if icon:
+                icon.filename = secure_filename(icon.filename)
+                icon.filename = change_filename(icon.filename)
+                icon.filename = str(room.id) + icon.filename
+                filepath = ROOM_DIR + icon.filename
+                icon.save(filepath)
             num = random.randint(10000, 100000)
             room=room.query.filter(Room.id==num).first()
 
@@ -118,6 +125,8 @@ class RoomResource(Resource):
             room.host_id=user.id
             room.name =name or "匿名聊天室"
             room.detail = detail
+            if icon:
+                room.icon = icon.filename or room.icon
 
             room.save()
             data = {
