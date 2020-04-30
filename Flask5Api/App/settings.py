@@ -1,7 +1,10 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+ROOM_DIR = os.path.join(os.path.join(BASE_DIR, "App/static/uploads/rooms/"))
+FC_DIR = os.path.join(os.path.join(BASE_DIR, "App/static/uploads/usericons/"))
+PIC_DIR = os.path.join(os.path.join(BASE_DIR, "App/static/uploads/pictures/"))
+FILE_DIR = os.path.join(os.path.join(BASE_DIR, "App/static/uploads/files/"))
 
 def get_db_uri(dbinfo):
 
@@ -13,7 +16,7 @@ def get_db_uri(dbinfo):
     port = dbinfo.get("PORT") or ""
     name = dbinfo.get("NAME") or ""
 
-    return "{}+{}://{}:{}@{}:{}/{}".format(engine, driver, user, password, host, port, name)
+    return "{}+{}://{}:{}@{}:{}/{}??charset=utf8mb4".format(engine, driver, user, password, host, port, name)
 
 
 class Config:
@@ -25,6 +28,9 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     SECRET_KEY = "BEFKJJIOAEJIOTEWTJOWIENETWJIORTwejiontwji0o"
+
+
+
 
 
 class DevelopConfig(Config):
@@ -41,6 +47,8 @@ class DevelopConfig(Config):
         "PORT": "3305",
         "NAME": "flask5api"
     }
+
+
 
     MAIL_SERVER = "smtp.163.com"
 
@@ -65,7 +73,7 @@ class TestConfig(Config):
         "USER": "root",
         "PASSWORD": "rock1204",
         "HOST": "localhost",
-        "PORT": "3306",
+        "PORT": "3305",
         "NAME": "flask5api"
 
     }
@@ -82,7 +90,7 @@ class StagingConfig(Config):
         "USER": "root",
         "PASSWORD": "rock1204",
         "HOST": "localhost",
-        "PORT": "3306",
+        "PORT": "3305",
         "NAME": "flask5api"
 
     }

@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 from App.apis.api_constant import HTTP_OK
 from App.apis.model_utils import login_required, change_filename
 from App.models import Room, Message
-from App.settings import PIC_DIR
+from App.settings import PIC_DIR, FILE_DIR
 
 parse_room_message = reqparse.RequestParser()
 parse_room_message.add_argument("token", type=str, required=True, help="请输入令牌")
@@ -66,6 +66,8 @@ class RoomSearchResource(Resource):
         messages = Message.query.filter(
             Message.body.ilike('%' + search_info + '%')).filter(
             Message.type==search_type
+        ).filter(
+            Message.message_room==room.id
         )
 
         data = {
@@ -96,8 +98,13 @@ class MsgPictureResource(Resource):
     def post(self):
         user=g.user
         args = parse_room_message.parse_args()
-        picture = request.files.get("picture")
+
         roomid = args.get("roomid")
+        room=Room.query.get(roomid)
+        if room is None:
+            abort(404, msg="room don't exit")
+
+        picture = request.files.get("picture")
         if picture is None:
             abort(404, msg="请上传图片")
         try:
@@ -122,10 +129,47 @@ class MsgPictureResource(Resource):
             try:
                 data = dict(marshal(message, message_fields))
                 u_socket.send(str(data))
-            except:
-                abort(402, "发送失败")
+            except Exception:
+                pass
 
+class MsgFileResource(Resource):
+    @login_required
+    def post(self):
+        user=g.user
+        args = parse_room_message.parse_args()
 
+        roomid = args.get("roomid")
+        room = Room.query.get(roomid)
+        if room is None:
+            abort(404, msg="room don't exit")
+
+        picture = request.files.get("file")
+        if picture is None:
+            abort(404, msg="请上传文件")
+        try:
+            picture.filename = secure_filename(picture.filename)
+            picture.filename = change_filename(picture.filename)
+            picture.filename = str(user.id) + picture.filename
+            filepath = FILE_DIR + picture.filename
+            picture.save(filepath)
+        except:
+            abort(401,"文件上传失败")
+        message = Message()
+        message.body = "http://39.106.119.191/uploads/files/"+picture.filename
+        message.type = 3
+        message.message_author = user.id
+        message.message_room = roomid
+        message.from_user = user.username
+        message.user_icon = user.icon
+        message.timestamp = datetime.now()
+        message.save()
+
+        for name, u_socket in user_socket_dict[roomid].items():
+            try:
+                data = dict(marshal(message, message_fields))
+                u_socket.send(str(data))
+            except Exception:
+                pass
 
 class MessageResource(Resource):
     @login_required
@@ -150,11 +194,11 @@ class MessageResource(Resource):
                     }
                     try:
                         u_socket.send(str(data))
-                    except:
+                    except WebSocketError as e:
                         print(user_socket_dict)
                         if user.username in user_socket_dict[room.id]:
                             del user_socket_dict[room.id][user.username]
-                        print(user_socket_dict)
+                        print(e)
                         return
 
         # print(user_socket_dict)

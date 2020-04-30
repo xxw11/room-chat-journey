@@ -51,5 +51,5 @@ def login_required(fun):
 # 更改上传的文件
 def change_filename(filename):
     fileinfo = os.path.splitext(filename)
-    filename = datetime.datetime.now().strftime("%m%d%H") + uuid.uuid4().hex + fileinfo[-1]
+    filename = datetime.datetime.now().strftime("%m%d%H") +fileinfo[0]+ uuid.uuid4().hex + fileinfo[-1]
     return filename

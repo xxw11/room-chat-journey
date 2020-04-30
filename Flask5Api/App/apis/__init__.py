@@ -6,7 +6,8 @@ from App import models
 # from App.apis.affairs_api import AffairResource, AffairsResource, AffairSortResource, AffairAddResource
 #
 #
-from App.apis.message_api import MessageResource, RoomMsgResource, MsgPictureResource, RoomSearchResource
+from App.apis.message_api import MessageResource, RoomMsgResource, MsgPictureResource, RoomSearchResource, \
+    MsgFileResource
 from App.apis.room_api import RoomResource, RoomInfoResource
 from App.apis.user_api import UserResource
 
@@ -22,5 +23,6 @@ api.add_resource(RoomInfoResource,'/api/room/info/')
 api.add_resource(RoomSearchResource,'/api/room/search/')
 api.add_resource(RoomMsgResource,'/api/msg/')
 api.add_resource(MsgPictureResource,'/api/msg/picture/')
+api.add_resource(MsgFileResource,'/api/msg/file/')
 api.add_resource(MessageResource,'/api/ws/')
 
